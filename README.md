@@ -2,6 +2,7 @@
 This is a basic python wordle solving program.
 
 #How to use
+
 ##Parameters
 This program has no parameters. Just run solver.py as a python script.
 
