@@ -2,9 +2,9 @@ import re
 import sys
 import numpy as np
 
-yellow = ""
+yellow = dict()
 gray = ""
-green = []
+green = dict()
 
 
 # this function adds one list onto the end of another, because .extend() wasn't working for me.
@@ -24,48 +24,56 @@ def generate_usability_regex(w):
 
 
 def generate_new_word_list(w, r, prev_word_list, ye, gy, gn):
-    regex1 = "^"
     zipped = tuple(zip(range(len(w)), w, r))
     print("zipped", zipped)
+    regex_list = list()
 
-    yel = ye + "".join(set([a for (i, a, b) in zipped if b == "Y" and a not in ye]))
-    print("yel", yel)
-
-    gre = extend(gn, [(i, a) for (i, a, b) in zipped if b == "G" and a not in [gw for (i, gw) in gn]])
-    gry = gy + "".join(set([a for (i, a, b) in zipped if b == "X" and a not in gy]))
-
-    # remove any greens from yellow and gray if they were added in this round
-    for (i, a) in gre:
-        yel = yel.replace(a, "")
-        gry = gry.replace(a, "")
-
-    cursor = 0
+    for (i, c, s) in zipped:
+        if s == "Y":
+            if c not in gn:
+                if c not in ye:
+                    ye[c] = list()
+                ye[c].append(i)
+        if s == "G":
+            gn[c] = i
+            # remove any greens from yellow if they were added in this round
+            if c in ye:
+                del ye[c]
+        if s == "X":
+            gy += c
 
     # create regex for green positions
-    for (i, a) in green:
-        print("i", i, cursor)
+    for c in gn.keys():
+        regex_list.append(re.compile("^(.{" + str(gn[c]) + "}[" + c + "])"))
 
-        rel_position = i - cursor
-        regex1 += "(.{" + str(rel_position) + "}[" + str(a) + "])"
-        cursor = i + 1
+    # create regex for yellow positions
+    for c in ye.keys():
+        # the word must contain this char
+        regex_list.append(re.compile("^(.*[" + c + "].*)"))
 
-    if len(yel) > 0:
-        regex1 += "(.*[%a].*)" % yel
+        # the word must not be in any previous positions
+        for i in ye[c]:
+            regex_list.append(re.compile("^(?!.{" + str(i) + "}[" + c + "])"))
 
     # second regex to exclude chars that aren't in the word
-    regex2 = "[^" + gry + "]{" + str(len(w)) + "}"
+    regex_list.append(re.compile("[^" + gy + "]{" + str(len(w)) + "}"))
 
-    listRE = re.compile(regex1)
-    grayRE = re.compile(regex2)
+    new_words = prev_word_list
+    for rule in regex_list:
+        print(rule)
+        new_words = list(filter(rule.match, new_words))
 
-    return list(filter(grayRE.match, filter(listRE.match, prev_word_list))), yel, gry, gre
+    return new_words, ye, gy, gn
 
 
 with open("resources/wordle_allowed.txt", 'rt') as nw:
     words = np.array([line.rstrip() for line in nw])
 
 print("first word recommendation: sores")
-for go in range(6):
+
+result = ""
+
+while result != "GGGGG":
 
     input_word = input("Enter the word you input: ")
     result = input("Enter the result of inputting your first word (example: YGYXX) ")
@@ -78,5 +86,7 @@ for go in range(6):
         check = re.compile(generate_usability_regex(word))
         # This function takes too long! and it's rubbish anyway (too much use of repeating chars)
         scores[word] = len(list(filter(check.match, words)))
+
+    print([(w,scores[w]) for w in words])
 
     print("next word recommendation:" + max(scores, key=scores.get))
