@@ -1,29 +1,11 @@
-import re
-import sys
 import numpy as np
+import re
 
-
-# this regex will allow strings with any characters in the same position as the input word to pass.
-# it is used to try and "score" a word for it's
-def generate_usability_regex(w):
-    output = ""
-    for i in range(len(w)):
-        output += "^.{" + str(i) + "}[" + w[i] + "]|"
-    return output[:-1]
-
-
-def setup(a_w):
-    print("processing the scores of each word across the entire population")
-    all_scores = dict()
-    for word in a_w:
-        scoreRE = re.compile(generate_usability_regex(word))
-        all_scores[word] = len(list(filter(scoreRE.match, a_w)))
-    return all_scores
+import wordle as wdl
 
 
 def generate_new_word_list(w, r, prev_word_list, h):
     zipped = tuple(zip(range(len(w)), w, r))
-    print("zipped", zipped)
     regex_list = list()
 
     for (i, c, s) in zipped:
@@ -79,46 +61,21 @@ def generate_new_word_list(w, r, prev_word_list, h):
 
     new_words = prev_word_list
     for rule in regex_list:
-        print(rule)
         new_words = list(filter(rule.match, new_words))
 
     return new_words, h
 
 
-def play_round(input_word, result, old_words, all_scores, prev_history):
+def play_round(input_word, result, old_words, prev_history):
     new_words, new_history = generate_new_word_list(input_word, result, old_words, prev_history)
 
     # redeclare scores after each pass.
     scores = dict()
 
     for word in new_words:
-        scoreRE = re.compile(generate_usability_regex(word))
-        scores[word] = len(list(filter(scoreRE.match, new_words))) * all_scores[word]
+        scoreRE = re.compile(wdl.generate_usability_regex(word))
+        scores[word] = len(list(filter(scoreRE.match, new_words))) * wdl.all_scores[word]
 
-    print([(w, scores[w]) for w in new_words])
-    return max(scores, key=scores.get), history
+    return max(scores, key=scores.get), new_history
 
 
-with open("resources/wordle_allowed.txt", 'rt') as nw:
-    all_words = np.array([line.rstrip() for line in nw])
-
-with open("resources/wordle_answers.txt", 'rt') as nw:
-    answer_words = np.array([line.rstrip() for line in nw])
-
-all_words = np.append(all_words, answer_words)
-words = answer_words
-result = ""
-
-history = {"yellow": dict(), "grey": dict(), "green": dict()}
-
-all_scores = setup(answer_words)
-
-# ideal best word has been precalculated, it takes a long time to run over every word in the dictionary, so this speeds
-# it up a bit
-print("first word recommendation: sores")
-
-while result != "GGGGG":
-    input_word = input("Enter the word you input: ")
-    result = input("Enter the result of inputting your first word (example: YGYXX) ")
-    next_word, history = play_round(input_word, result, words, all_scores, history)
-    print("next word recommendation: " + next_word)
