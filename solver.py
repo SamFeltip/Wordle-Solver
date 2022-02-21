@@ -65,9 +65,10 @@ def generate_new_word_list(w, r, prev_word_list, ye, gy, gn):
 
     return new_words, ye, gy, gn
 
-
 with open("resources/wordle_allowed.txt", 'rt') as nw:
-    words = np.array([line.rstrip() for line in nw])
+    all_words = np.array([line.rstrip() for line in nw])
+
+words = all_words
 
 print("first word recommendation: sores")
 
@@ -85,7 +86,7 @@ while result != "GGGGG":
     for word in words:
         check = re.compile(generate_usability_regex(word))
         # This function takes too long! and it's rubbish anyway (too much use of repeating chars)
-        scores[word] = len(list(filter(check.match, words)))
+        scores[word] = len(list(filter(check.match, words))) * len(list(filter(check.match, all_words)))
 
     print([(w,scores[w]) for w in words])
 
