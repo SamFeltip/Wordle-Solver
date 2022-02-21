@@ -14,8 +14,8 @@ def extend(list1, list2):
     return list1
 
 
-# all the words that are run on this function will already follow the gray/green/yellow rules.
 # this regex will allow strings with any characters in the same position as the input word to pass.
+# it is used to try and "score" a word for it's
 def generate_usability_regex(w):
     output = ""
     for i in range(len(w)):
@@ -40,23 +40,32 @@ def generate_new_word_list(w, r, prev_word_list, ye, gy, gn):
             if c in ye:
                 del ye[c]
         if s == "X":
-            gy += c
+            if s not in gy:
+                gy += c
 
     # create regex for green positions
     for c in gn.keys():
-        regex_list.append(re.compile("^(.{" + str(gn[c]) + "}[" + c + "])"))
+        regex_list.append(re.compile(
+                "^(.{" + str(gn[c]) + "}[" + c + "])"
+        ))
 
     # create regex for yellow positions
     for c in ye.keys():
         # the word must contain this char
-        regex_list.append(re.compile("^(.*[" + c + "].*)"))
+        regex_list.append(re.compile(
+            "^(.*[" + c + "].*)"
+        ))
 
         # the word must not be in any previous positions
         for i in ye[c]:
-            regex_list.append(re.compile("^(?!.{" + str(i) + "}[" + c + "])"))
+            regex_list.append(re.compile(
+                "^(?!.{" + str(i) + "}[" + c + "])"
+            ))
 
     # second regex to exclude chars that aren't in the word
-    regex_list.append(re.compile("[^" + gy + "]{" + str(len(w)) + "}"))
+    regex_list.append(re.compile(
+        "[^" + gy + "]{" + str(len(w)) + "}"
+    ))
 
     new_words = prev_word_list
     for rule in regex_list:
@@ -64,6 +73,7 @@ def generate_new_word_list(w, r, prev_word_list, ye, gy, gn):
         new_words = list(filter(rule.match, new_words))
 
     return new_words, ye, gy, gn
+
 
 with open("resources/wordle_allowed.txt", 'rt') as nw:
     all_words = np.array([line.rstrip() for line in nw])
@@ -85,9 +95,8 @@ while result != "GGGGG":
 
     for word in words:
         check = re.compile(generate_usability_regex(word))
-        # This function takes too long! and it's rubbish anyway (too much use of repeating chars)
         scores[word] = len(list(filter(check.match, words))) * len(list(filter(check.match, all_words)))
 
-    print([(w,scores[w]) for w in words])
+    print([(w, scores[w]) for w in words])
 
     print("next word recommendation:" + max(scores, key=scores.get))
