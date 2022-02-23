@@ -6,11 +6,12 @@ result = ""
 history = {"yellow": dict(), "grey": dict(), "green": dict(), "regex": set()}
 
 turns = 0
-guess_word = "sores"
-all_scores = wdl.get_scores()
-print("first word: sores")
+guess_word = "crane"
+print("first word: crane")
 while result != "GGGGG":
     guess_word = input("guess: ")
     result = input("result: ")
-    guess_word, history = wdl.play_round(guess_word, result, words, history, all_scores)
+    guess_word, history = wdl.play_round(guess_word, result, words, history)
     print("next word: ", guess_word)
+
+print("word found!")

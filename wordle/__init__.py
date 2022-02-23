@@ -1,7 +1,7 @@
 import numpy as np
 import re
 import random
-
+import wordle.find_predict_word as fpw
 
 # this regex will allow strings with any characters in the same position as the input word to pass.
 # it is used to try and "score" a word for it's
@@ -45,7 +45,7 @@ def return_score(guess, answer):
     return "".join(output)
 
 
-def auto_play_wordle(answer, all_scores):
+def auto_play_wordle(answer, first_word="crane"):
     words = answer_words
     result = ""
 
@@ -55,23 +55,22 @@ def auto_play_wordle(answer, all_scores):
     # this speeds it up a bit
 
     turns = 0
-    guess_word = "sores"
+    guess_word = first_word
 
     while guess_word != answer:
         print(guess_word, " (", answer, ")")
         result = return_score(guess_word, answer)
-        guess_word, history = play_round(guess_word, result, words, history, all_scores)
+        guess_word, history = play_round(guess_word, result, words, history)
         turns += 1
 
     return turns+1
 
 
-def test_solver(turns):
-    all_scores = get_scores()
+def test_solver(turns, first_word):
     total = 0
     for i in range(turns):
         answer = answer_words[random.randint(0, len(answer_words))]
-        turns_taken = auto_play_wordle(answer, all_scores)
+        turns_taken = auto_play_wordle(answer, first_word)
         print("answer: ", answer, ". turns taken: ", turns_taken)
         total += turns_taken
 
@@ -161,7 +160,7 @@ def generate_new_word_list(w, r, prev_word_list, h):
 
     new_words = prev_word_list
     for rule in regex_list:
-        print(rule)
+        # print(rule)
         new_words = list(filter(rule.match, new_words))
 
     h["regex"] = regex_list
@@ -169,17 +168,26 @@ def generate_new_word_list(w, r, prev_word_list, h):
     return new_words, h
 
 
-def play_round(input_word, result, old_words, prev_history, all_scores):
+def play_round(input_word, result, old_words, prev_history):
     new_words, new_history = generate_new_word_list(input_word, result, old_words, prev_history)
+
     print(new_words)
     # redeclare scores after each pass.
     scores = dict()
 
-    for word in new_words:
-        scoreRE = re.compile(generate_usability_regex(word))
-        scores[word] = len(list(filter(scoreRE.match, new_words))) * all_scores[word]
+    # if there is a large number of words to choose from and there are no yellows to use...
+    if(len(new_history["yellow"]) == 0 and len(new_words) > 2):
+        # use a mediator word to remove as many words by catching their characters
+        print("potential trap found. predicting a word to minimise the possible word list.")
+        # return the first element in the list of mediator words
+        return fpw.find_mediator_words(new_words, new_history["green"].keys(), answer_words)[0], new_history
+    else:
+        # score every word based on common character positions
+        for word in new_words:
+            scoreRE = re.compile(generate_usability_regex(word))
+            scores[word] = len(list(filter(scoreRE.match, new_words)))
 
-    return max(scores, key=scores.get), new_history
+        return max(scores, key=scores.get), new_history
 
 
 with open("../wordle/resources/wordle_allowed.txt", 'rt') as nw:
