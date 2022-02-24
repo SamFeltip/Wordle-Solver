@@ -1,4 +1,3 @@
-import numpy as np
 import re
 import random
 import wordle.find_predict_word as fpw
@@ -39,7 +38,7 @@ def return_score(guess, answer):
             output.append('X')
 
     for i in range(len(answer)):
-        if guess[i] in answer and repeat_count[guess[i]] > 0:
+        if guess[i] in answer and repeat_count[guess[i]] > 0 and output[i] != 'G':
             output[i] = 'Y'
             repeat_count[guess[i]] -= 1
     return "".join(output)
@@ -60,6 +59,8 @@ def auto_play_wordle(answer, first_word="crane"):
     while guess_word != answer:
         print(guess_word, " (", answer, ")")
         result = return_score(guess_word, answer)
+        print("res:", result)
+        print(history)
         guess_word, history = play_round(guess_word, result, words, history)
         turns += 1
 
@@ -124,6 +125,9 @@ def generate_new_word_list(w, r, prev_word_list, h):
             if c not in h["grey"]:
                 h["grey"][c] = list()
 
+            if c in h["yellow"]:
+                del h["yellow"][c]
+
             h["grey"][c].append(i)
 
     # # create regex for green positions
@@ -160,7 +164,7 @@ def generate_new_word_list(w, r, prev_word_list, h):
 
     new_words = prev_word_list
     for rule in regex_list:
-        # print(rule)
+        print(rule)
         new_words = list(filter(rule.match, new_words))
 
     h["regex"] = regex_list
@@ -191,12 +195,12 @@ def play_round(input_word, result, old_words, prev_history):
 
 
 with open("../wordle/resources/wordle_allowed.txt", 'rt') as nw:
-    all_words = np.array([line.rstrip() for line in nw])
+    all_words = list([line.rstrip() for line in nw])
 
 with open("../wordle/resources/wordle_answers.txt", 'rt') as nw:
-    answer_words = np.array([line.rstrip() for line in nw])
+    answer_words = list([line.rstrip() for line in nw])
 
-all_words = np.append(all_words, answer_words)
+all_words.extend(answer_words)
 
 
 
