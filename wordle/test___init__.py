@@ -39,8 +39,6 @@ class Test(TestCase):
         # return_score("corer", "cower")
         print(wdl.auto_play_wordle("cower", "crane"))
 
-
-
     def test_scoring(self):
         s = wdl.get_scores(wdl.all_words, wdl.all_words)
         print({k: v for k, v in sorted(s.items(), key=lambda item: item[1])})
