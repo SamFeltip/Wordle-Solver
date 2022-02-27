@@ -7,7 +7,7 @@ import wordle.find_predict_word as fpw
 # example:
 # input: "first" returns: "^.{f}[0] | ^.{i}[1] | ^.{r}[2] | ^.{s}[3] | ^.{t}[4]
 def generate_usability_regex(w):
-    output = ""
+    output = "."
     # remove duplicate characters
     unique_chars = list(set(w))
     for i in range(len(unique_chars)):
@@ -25,6 +25,11 @@ def get_scores(poss_words, search_words):
     for word in poss_words:
         scoreRE = re.compile(generate_usability_regex(word))
         # return the number of words which pass the above regular expression
+        if word == 'x':
+            print(search_words[689])
+            print(scoreRE)
+            print(list(filter(scoreRE.match, search_words)))
+
         all_scores[word] = len(list(filter(scoreRE.match, search_words)))
 
     return all_scores
