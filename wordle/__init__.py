@@ -2,21 +2,30 @@ import re
 import random
 import wordle.find_predict_word as fpw
 
+
 # this regex will allow strings with any characters in the same position as the input word to pass.
-# it is used to try and "score" a word for it's
+# example:
+# input: "first" returns: "^.{f}[0] | ^.{i}[1] | ^.{r}[2] | ^.{s}[3] | ^.{t}[4]
 def generate_usability_regex(w):
     output = ""
-    for i in range(len(w)):
-        output += "^.{" + str(i) + "}[" + w[i] + "]|"
+    # remove duplicate characters
+    unique_chars = list(set(w))
+    for i in range(len(unique_chars)):
+        print(w)
+        output += unique_chars[i] + "|"
+        # output += "^.{" + str(i) + "}[" + w[i] + "]|"
+
+    #     get rid of the final "|" character at the end of the string and return the resulting string
     return output[:-1]
 
 
-def get_scores():
-    print("processing...")
+def get_scores(poss_words, search_words):
     all_scores = dict()
-    for word in answer_words:
+    # iterate through the list of all words input:
+    for word in poss_words:
         scoreRE = re.compile(generate_usability_regex(word))
-        all_scores[word] = len(list(filter(scoreRE.match, all_words)))
+        # return the number of words which pass the above regular expression
+        all_scores[word] = len(list(filter(scoreRE.match, search_words)))
 
     return all_scores
 
@@ -187,9 +196,7 @@ def play_round(input_word, result, old_words, prev_history):
         return fpw.find_mediator_words(new_words, new_history["green"].keys(), answer_words)[0], new_history
     else:
         # score every word based on common character positions
-        for word in new_words:
-            scoreRE = re.compile(generate_usability_regex(word))
-            scores[word] = len(list(filter(scoreRE.match, new_words)))
+        scores = get_scores(new_words)
 
         return max(scores, key=scores.get), new_history
 

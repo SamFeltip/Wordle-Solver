@@ -31,7 +31,7 @@ def find_mediator_words(possible_answers, greens, answer_list):
     return mediator_words
 
 # examples of possible inputs:
-# predict(['drone', 'drove', 'erode', 'froze', 'grope', 'grove', 'prone', 'prove', 'trope', 'trove', 'wrote'], ['o', 'e', 'r'])
+# find_mediator_words(['drone', 'drove', 'erode', 'froze', 'grope', 'grove', 'prone', 'prove', 'trope', 'trove', 'wrote'], ['o', 'e', 'r'], wdl.answer_words)
 
 # XGGXG
 
